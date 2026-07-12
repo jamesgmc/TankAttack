@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tank Attack</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <div id="auth-screen" class="screen active">
+        <div class="glass-panel">
+            <h1>TANK ATTACK</h1>
+            <div class="auth-tabs">
+                <button id="tab-login" class="active">Login</button>
+                <button id="tab-register">Register</button>
+            </div>
+            
+            <form id="auth-form">
+                <input type="text" id="username" placeholder="Username" required />
+                <input type="password" id="password" placeholder="Password" required />
+                <button type="submit" id="auth-submit">Enter Battle</button>
+            </form>
+            <p id="auth-error" class="error"></p>
+        </div>
+    </div>
+
+    <div id="lobby-screen" class="screen">
+        <div class="glass-panel wide">
+            <h2>Command Center</h2>
+            <div class="lobby-header">
+                <span id="player-name">Welcome, Player</span>
+                <button id="btn-create-game" class="btn-primary">Create New Game</button>
+            </div>
+            <div class="lobbies-container">
+                <h3>Active Battles</h3>
+                <ul id="lobbies-list">
+                    <!-- Lobbies injected here -->
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div id="game-screen" class="screen">
+        <div class="game-hud">
+            <div id="player-hp">HP: 100</div>
+            <div id="game-status">Waiting for opponent...</div>
+            <div id="player-score">Score: 0</div>
+        </div>
+        <canvas id="game-canvas" width="800" height="600"></canvas>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="app.js"></script>
+    <script src="game.js"></script>
+</body>
+</html>
