@@ -2,8 +2,6 @@ let gameMap = null;
 let currentGameId = null;
 const canvas = document.getElementById('game-canvas');
 const ctx = canvas.getContext('2d');
-const hpDisplay = document.getElementById('player-hp');
-const scoreDisplay = document.getElementById('player-score');
 const playersHud = document.getElementById('players-hud');
 
 // Input state
@@ -196,13 +194,8 @@ function render(state) {
         ctx.strokeRect(obs.x, obs.y, obs.w, obs.h);
     }
 
-    // Find our tank to update HUD and angle calc
+    // Find our tank to update angle calc
     window.myTank = state.players[socket.id];
-    if (window.myTank) {
-        hpDisplay.textContent = `HP: ${window.myTank.hp}`;
-        hpDisplay.style.color = window.myTank.hp > 50 ? 'var(--primary)' : 'var(--secondary)';
-        scoreDisplay.textContent = `Score: ${window.myTank.score}`;
-    }
 
     // Draw Players
     for (let id in state.players) {
@@ -267,14 +260,16 @@ function render(state) {
         ctx.closePath();
     }
 
-    // Draw Names and Hit bars in the DOM
+    // Draw Names, Scores and Hit bars in the DOM
     let hudHtml = '';
     for (let id in state.players) {
         const p = state.players[id];
         hudHtml += `
             <div style="text-align: center;">
-                <div style="color: ${p.color}; font-size: 14px; margin-bottom: 5px; text-shadow: 0 0 5px ${p.color};">${p.username}</div>
-                <div style="width: 100px; height: 8px; background: #ff0000; border-radius: 4px; box-shadow: 0 0 5px #ff0000 inset;">
+                <div style="color: ${p.color}; font-size: 14px; margin-bottom: 5px; text-shadow: 0 0 5px ${p.color};">
+                    ${p.username} &nbsp;&nbsp;|&nbsp;&nbsp; Score: <span style="font-size: 1.2em; font-weight: bold;">${p.score}</span>
+                </div>
+                <div style="width: 140px; height: 8px; background: #ff0000; border-radius: 4px; box-shadow: 0 0 5px #ff0000 inset; margin: 0 auto;">
                     <div style="width: ${p.hp}%; height: 100%; background: #00ffcc; border-radius: 4px; transition: width 0.1s; box-shadow: 0 0 8px #00ffcc;"></div>
                 </div>
             </div>

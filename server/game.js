@@ -139,9 +139,19 @@ class Game {
                             hit = true;
                             p.hp -= 20;
                             if (p.hp <= 0) {
-                                p.hp = 100;
                                 if (this.players[b.owner]) {
                                     this.players[b.owner].score++;
+                                }
+                                
+                                // Reset both tanks to starting positions
+                                let isP1 = true;
+                                for (let resetId in this.players) {
+                                    const rp = this.players[resetId];
+                                    rp.hp = 100;
+                                    rp.x = isP1 ? 50 : this.map.width - 50;
+                                    rp.y = this.map.height / 2;
+                                    rp.angle = isP1 ? 0 : Math.PI;
+                                    isP1 = false;
                                 }
                             }
                         }
