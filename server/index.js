@@ -70,6 +70,19 @@ io.on('connection', (socket) => {
         }
     });
 
+    socket.on('leaveGame', () => {
+        for (let gameId in games) {
+            if (games[gameId].players[socket.id]) {
+                games[gameId].removePlayer(socket.id);
+                socket.leave(gameId);
+                if (Object.keys(games[gameId].players).length === 0) {
+                    delete games[gameId];
+                }
+                break;
+            }
+        }
+    });
+
     socket.on('disconnect', () => {
         for (let gameId in games) {
             if (games[gameId].players[socket.id]) {

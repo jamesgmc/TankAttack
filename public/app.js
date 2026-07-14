@@ -7,6 +7,8 @@ const authScreen = document.getElementById('auth-screen');
 const customizationScreen = document.getElementById('customization-screen');
 const lobbyScreen = document.getElementById('lobby-screen');
 const gameScreen = document.getElementById('game-screen');
+const gameOverOverlay = document.getElementById('game-over-overlay');
+const btnReturnLobby = document.getElementById('btn-return-lobby');
 
 const tabLogin = document.getElementById('tab-login');
 const tabRegister = document.getElementById('tab-register');
@@ -150,3 +152,16 @@ btnCreateGame.addEventListener('click', () => {
 window.joinGame = (gameId) => {
     socket.emit('joinGame', { gameId, username: currentUser, color: playerColor });
 };
+
+// Game Over logic
+window.showGameOverScreen = (winnerName) => {
+    document.getElementById('winner-text').textContent = `${winnerName} WINS!`;
+    gameOverOverlay.style.display = 'flex';
+};
+
+btnReturnLobby.addEventListener('click', () => {
+    socket.emit('leaveGame');
+    gameOverOverlay.style.display = 'none';
+    window.resetGameLocalState(); // We will define this in game.js
+    initLobby();
+});

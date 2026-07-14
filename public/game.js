@@ -16,6 +16,13 @@ let mouseY = 0;
 
 let previousState = {};
 let explosions = [];
+let gameOverHandled = false;
+
+window.resetGameLocalState = () => {
+    gameOverHandled = false;
+    previousState = {};
+    explosions = [];
+};
 
 function createExplosion(x, y, color) {
     let particles = [];
@@ -145,6 +152,37 @@ const SoundEngine = {
         filter.connect(gain);
         gain.connect(audioCtx.destination);
         noise.start();
+    },
+
+    playClapping: function() {
+        if (!this.initialized) return;
+        // Generate multiple overlapping noise bursts for applause
+        for (let j = 0; j < 15; j++) {
+            setTimeout(() => {
+                const bufferSize = audioCtx.sampleRate * 0.1;
+                const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = Math.random() * 2 - 1;
+                }
+                
+                const noise = audioCtx.createBufferSource();
+                noise.buffer = buffer;
+                
+                const filter = audioCtx.createBiquadFilter();
+                filter.type = 'bandpass';
+                filter.frequency.setValueAtTime(1000 + Math.random() * 500, audioCtx.currentTime); 
+                
+                const gain = audioCtx.createGain();
+                gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+                
+                noise.connect(filter);
+                filter.connect(gain);
+                gain.connect(audioCtx.destination);
+                noise.start();
+            }, Math.random() * 1000);
+        }
     }
 };
 function initGame(map, gameId) {
@@ -350,4 +388,12 @@ function render(state) {
         `;
     }
     playersHud.innerHTML = hudHtml;
+
+    if (state.winner && !gameOverHandled) {
+        gameOverHandled = true;
+        SoundEngine.playClapping();
+        if (window.showGameOverScreen) {
+            window.showGameOverScreen(state.winner);
+        }
+    }
 }

@@ -15,6 +15,7 @@ class Game {
         this.active = false;
         this.lastUpdate = Date.now();
         this.roundDelay = 0;
+        this.winner = null;
     }
 
     addPlayer(socketId, username, color) {
@@ -148,6 +149,13 @@ class Game {
                             if (p.hp <= 0) {
                                 if (this.players[b.owner]) {
                                     this.players[b.owner].score++;
+                                    
+                                    // Check win condition
+                                    if (this.players[b.owner].score >= 10) {
+                                        this.winner = this.players[b.owner].username;
+                                        this.active = false;
+                                        break; // End game immediately
+                                    }
                                 }
                                 
                                 // Reset both tanks to starting positions
@@ -185,7 +193,8 @@ class Game {
             players: this.players,
             bullets: this.bullets,
             map: this.map,
-            active: this.active
+            active: this.active,
+            winner: this.winner
         };
     }
 }
