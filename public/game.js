@@ -15,6 +15,96 @@ const keys = {
 let mouseX = 0;
 let mouseY = 0;
 
+let previousHp = {};
+
+// Procedural Sound Engine
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+const SoundEngine = {
+    initialized: false,
+    engineOsc: null,
+    engineFilter: null,
+    engineGain: null,
+    
+    init: function() {
+        if(this.initialized) return;
+        if(audioCtx.state === 'suspended') audioCtx.resume();
+        this.initialized = true;
+        
+        // Better Engine Sound (Low freq sawtooth with low pass filter)
+        this.engineOsc = audioCtx.createOscillator();
+        this.engineOsc.type = 'sawtooth';
+        this.engineOsc.frequency.setValueAtTime(30, audioCtx.currentTime); // Low grumble
+        
+        this.engineFilter = audioCtx.createBiquadFilter();
+        this.engineFilter.type = 'lowpass';
+        this.engineFilter.frequency.setValueAtTime(100, audioCtx.currentTime); // Muffle it
+        
+        this.engineGain = audioCtx.createGain();
+        this.engineGain.gain.setValueAtTime(0.05, audioCtx.currentTime); // Idle volume
+        
+        this.engineOsc.connect(this.engineFilter);
+        this.engineFilter.connect(this.engineGain);
+        this.engineGain.connect(audioCtx.destination);
+        this.engineOsc.start();
+    },
+    
+    updateMovement: function(isMoving) {
+        if (!this.initialized) return;
+        const now = audioCtx.currentTime;
+        if (isMoving) {
+            this.engineOsc.frequency.setTargetAtTime(45, now, 0.2);
+            this.engineFilter.frequency.setTargetAtTime(200, now, 0.2);
+            this.engineGain.gain.setTargetAtTime(0.1, now, 0.2);
+        } else {
+            this.engineOsc.frequency.setTargetAtTime(30, now, 0.2);
+            this.engineFilter.frequency.setTargetAtTime(100, now, 0.2);
+            this.engineGain.gain.setTargetAtTime(0.05, now, 0.2);
+        }
+    },
+    
+    playFire: function() {
+        if (!this.initialized) return;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.1);
+        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.1);
+    },
+    
+    playHit: function() {
+        if (!this.initialized) return;
+        // White noise burst for hit/explosion
+        const bufferSize = audioCtx.sampleRate * 0.2; // 0.2 seconds
+        const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+            data[i] = Math.random() * 2 - 1;
+        }
+        
+        const noise = audioCtx.createBufferSource();
+        noise.buffer = buffer;
+        
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(800, audioCtx.currentTime);
+        filter.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.2);
+        
+        const gain = audioCtx.createGain();
+        gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+        
+        noise.connect(filter);
+        filter.connect(gain);
+        gain.connect(audioCtx.destination);
+        noise.start();
+    }
+};
 function initGame(map, gameId) {
     gameMap = map;
     currentGameId = gameId;
@@ -22,6 +112,7 @@ function initGame(map, gameId) {
     
     // Set up input listeners
     window.addEventListener('keydown', (e) => {
+        SoundEngine.init();
         if (e.code === 'Space') keys.Space = true;
         if (keys.hasOwnProperty(e.key) && e.key !== 'Space') keys[e.key] = true;
     });
@@ -37,7 +128,7 @@ function initGame(map, gameId) {
         mouseY = e.clientY - rect.top;
     });
     
-    canvas.addEventListener('mousedown', () => { keys.Space = true; });
+    canvas.addEventListener('mousedown', () => { SoundEngine.init(); keys.Space = true; });
     canvas.addEventListener('mouseup', () => { keys.Space = false; });
 
     // Start input loop
@@ -60,6 +151,9 @@ function sendInput() {
         targetAngle = Math.atan2(mouseY - window.myTank.y, mouseX - window.myTank.x);
     }
 
+    const isMoving = keys.w || keys.ArrowUp || keys.s || keys.ArrowDown || keys.a || keys.ArrowLeft || keys.d || keys.ArrowRight;
+    SoundEngine.updateMovement(isMoving);
+
     socket.emit('input', {
         up: keys.w || keys.ArrowUp,
         down: keys.s || keys.ArrowDown,
@@ -68,6 +162,10 @@ function sendInput() {
         fire: keys.Space,
         targetAngle: targetAngle
     });
+    
+    if (keys.Space) {
+        SoundEngine.playFire();
+    }
     
     // Reset fire so we don't spam if they hold (handled server side via rate limit or just let it shoot if < 2)
     keys.Space = false;
@@ -108,6 +206,11 @@ function render(state) {
     // Draw Players
     for (let id in state.players) {
         const p = state.players[id];
+        
+        if (previousHp[id] !== undefined && p.hp < previousHp[id]) {
+            SoundEngine.playHit();
+        }
+        previousHp[id] = p.hp;
         
         ctx.save();
         ctx.translate(p.x, p.y);
