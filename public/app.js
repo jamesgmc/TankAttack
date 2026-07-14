@@ -16,7 +16,6 @@ const authError = document.getElementById('auth-error');
 const playerNameDisplay = document.getElementById('player-name');
 const lobbiesList = document.getElementById('lobbies-list');
 const btnCreateGame = document.getElementById('btn-create-game');
-const gameStatus = document.getElementById('game-status');
 
 // Screen Management
 function showScreen(screen) {
@@ -82,7 +81,7 @@ function initLobby() {
     });
 
     socket.on('playerJoined', () => {
-        gameStatus.textContent = 'Battle Active!';
+        // Battle starts
     });
 
     fetchLobbies();

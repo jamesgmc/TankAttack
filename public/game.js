@@ -4,6 +4,7 @@ const canvas = document.getElementById('game-canvas');
 const ctx = canvas.getContext('2d');
 const hpDisplay = document.getElementById('player-hp');
 const scoreDisplay = document.getElementById('player-score');
+const playersHud = document.getElementById('players-hud');
 
 // Input state
 const keys = {
@@ -228,18 +229,6 @@ function render(state) {
         ctx.fillRect(0, -3, 25, 6);
 
         ctx.restore();
-
-        // Draw Health Bar
-        ctx.fillStyle = '#ff0000';
-        ctx.fillRect(p.x - 15, p.y - 25, 30, 4);
-        ctx.fillStyle = '#00ffcc';
-        ctx.fillRect(p.x - 15, p.y - 25, (p.hp / 100) * 30, 4);
-        
-        // Name tag
-        ctx.fillStyle = '#fff';
-        ctx.font = '10px Orbitron';
-        ctx.textAlign = 'center';
-        ctx.fillText(p.username, p.x, p.y - 32);
     }
 
     // Draw Bullets
@@ -252,4 +241,19 @@ function render(state) {
         ctx.fill();
         ctx.closePath();
     }
+
+    // Draw Names and Hit bars in the DOM
+    let hudHtml = '';
+    for (let id in state.players) {
+        const p = state.players[id];
+        hudHtml += `
+            <div style="text-align: center;">
+                <div style="color: ${p.color}; font-size: 14px; margin-bottom: 5px; text-shadow: 0 0 5px ${p.color};">${p.username}</div>
+                <div style="width: 100px; height: 8px; background: #ff0000; border-radius: 4px; box-shadow: 0 0 5px #ff0000 inset;">
+                    <div style="width: ${p.hp}%; height: 100%; background: #00ffcc; border-radius: 4px; transition: width 0.1s; box-shadow: 0 0 8px #00ffcc;"></div>
+                </div>
+            </div>
+        `;
+    }
+    playersHud.innerHTML = hudHtml;
 }
