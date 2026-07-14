@@ -217,16 +217,41 @@ function render(state) {
         ctx.translate(p.x, p.y);
         ctx.rotate(p.angle);
 
-        // Tank Body
+        // Tracks (Background Base)
+        ctx.fillStyle = '#111';
+        ctx.shadowBlur = 0;
+        ctx.fillRect(-25, -22, 50, 10); // Top track
+        ctx.fillRect(-25, 12, 50, 10);  // Bottom track
+
+        // Tint tracks with a darker shade of the tank's color
+        ctx.globalAlpha = 0.3;
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-25, -22, 50, 10); // Top track
+        ctx.fillRect(-25, 12, 50, 10);  // Bottom track
+        ctx.globalAlpha = 1.0;
+
+        // Track treads (2 lines on each track)
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        // Top track lines
+        ctx.moveTo(-25, -19); ctx.lineTo(25, -19);
+        ctx.moveTo(-25, -15); ctx.lineTo(25, -15);
+        // Bottom track lines
+        ctx.moveTo(-25, 15); ctx.lineTo(25, 15);
+        ctx.moveTo(-25, 19); ctx.lineTo(25, 19);
+        ctx.stroke();
+
+        // Tank Body (Longer)
         ctx.fillStyle = p.color;
         ctx.shadowColor = p.color;
         ctx.shadowBlur = 10;
-        ctx.fillRect(-15, -15, 30, 30);
+        ctx.fillRect(-20, -16, 40, 32);
         
         // Tank Barrel
         ctx.fillStyle = '#fff';
         ctx.shadowBlur = 0;
-        ctx.fillRect(0, -3, 25, 6);
+        ctx.fillRect(0, -3, 30, 6);
 
         ctx.restore();
     }
