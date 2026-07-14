@@ -14,6 +14,7 @@ class Game {
         this.map = defaultMap;
         this.active = false;
         this.lastUpdate = Date.now();
+        this.roundDelay = 0;
     }
 
     addPlayer(socketId, username, color) {
@@ -45,7 +46,7 @@ class Game {
 
     handleInput(socketId, input) {
         const player = this.players[socketId];
-        if (!player || !this.active) return;
+        if (!player || !this.active || this.roundDelay > 0) return;
 
         const speed = 4;
         let dx = 0;
@@ -104,6 +105,12 @@ class Game {
     update() {
         if (!this.active) return;
         
+        if (this.roundDelay > 0) {
+            this.roundDelay--;
+            // Even during delay, we should return early so game doesn't process movement/bullets
+            return;
+        }
+        
         // Update bullets
         for (let i = this.bullets.length - 1; i >= 0; i--) {
             let b = this.bullets[i];
@@ -151,8 +158,13 @@ class Game {
                                     rp.x = isP1 ? 50 : this.map.width - 50;
                                     rp.y = this.map.height / 2;
                                     rp.angle = isP1 ? 0 : Math.PI;
+                                    rp.bulletCount = 0; // Reset bullet counts too
                                     isP1 = false;
                                 }
+                                
+                                // Clear all bullets and add 1 second delay (60 frames)
+                                this.bullets = [];
+                                this.roundDelay = 60;
                             }
                         }
                     }

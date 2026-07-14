@@ -14,7 +14,23 @@ const keys = {
 let mouseX = 0;
 let mouseY = 0;
 
-let previousHp = {};
+let previousState = {};
+let explosions = [];
+
+function createExplosion(x, y, color) {
+    let particles = [];
+    for (let i = 0; i < 40; i++) {
+        particles.push({
+            x: x,
+            y: y,
+            vx: (Math.random() - 0.5) * 15,
+            vy: (Math.random() - 0.5) * 15,
+            life: 1.0,
+            color: color
+        });
+    }
+    return particles;
+}
 
 // Procedural Sound Engine
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -97,6 +113,33 @@ const SoundEngine = {
         const gain = audioCtx.createGain();
         gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+        
+        noise.connect(filter);
+        filter.connect(gain);
+        gain.connect(audioCtx.destination);
+        noise.start();
+    },
+    
+    playExplosion: function() {
+        if (!this.initialized) return;
+        const bufferSize = audioCtx.sampleRate * 0.8;
+        const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+            data[i] = Math.random() * 2 - 1;
+        }
+        
+        const noise = audioCtx.createBufferSource();
+        noise.buffer = buffer;
+        
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(300, audioCtx.currentTime); 
+        filter.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 0.8);
+        
+        const gain = audioCtx.createGain();
+        gain.gain.setValueAtTime(1.0, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.8);
         
         noise.connect(filter);
         filter.connect(gain);
@@ -201,10 +244,17 @@ function render(state) {
     for (let id in state.players) {
         const p = state.players[id];
         
-        if (previousHp[id] !== undefined && p.hp < previousHp[id]) {
-            SoundEngine.playHit();
+        if (previousState[id]) {
+            if (p.hp < previousState[id].hp) {
+                SoundEngine.playHit();
+            } else if (p.hp > previousState[id].hp) {
+                // HP went up, which means they died and respawned! 
+                // Spawn explosion at their PREVIOUS location.
+                explosions.push(createExplosion(previousState[id].x, previousState[id].y, p.color));
+                SoundEngine.playExplosion();
+            }
         }
-        previousHp[id] = p.hp;
+        previousState[id] = { hp: p.hp, x: p.x, y: p.y };
         
         ctx.save();
         ctx.translate(p.x, p.y);
@@ -258,6 +308,30 @@ function render(state) {
         ctx.shadowBlur = 10;
         ctx.fill();
         ctx.closePath();
+    }
+
+    // Draw Explosions
+    for (let i = explosions.length - 1; i >= 0; i--) {
+        let particles = explosions[i];
+        let aliveParticles = 0;
+        for (let p of particles) {
+            if (p.life > 0) {
+                p.x += p.vx;
+                p.y += p.vy;
+                p.life -= 0.03; // Fade out speed
+                ctx.globalAlpha = Math.max(0, p.life);
+                ctx.fillStyle = p.color;
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = p.color;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+                ctx.fill();
+                aliveParticles++;
+            }
+        }
+        ctx.globalAlpha = 1.0;
+        ctx.shadowBlur = 0;
+        if (aliveParticles === 0) explosions.splice(i, 1);
     }
 
     // Draw Names, Scores and Hit bars in the DOM
