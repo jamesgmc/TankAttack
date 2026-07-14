@@ -16,7 +16,7 @@ class Game {
         this.lastUpdate = Date.now();
     }
 
-    addPlayer(socketId, username) {
+    addPlayer(socketId, username, color) {
         if (Object.keys(this.players).length >= 2) return false;
         
         const isPlayer1 = Object.keys(this.players).length === 0;
@@ -28,7 +28,7 @@ class Game {
             angle: isPlayer1 ? 0 : Math.PI,
             hp: 100,
             score: 0,
-            color: isPlayer1 ? '#00ffcc' : '#ff3366',
+            color: color || (isPlayer1 ? '#00ffcc' : '#ff3366'),
             bulletCount: 0
         };
 

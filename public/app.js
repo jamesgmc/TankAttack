@@ -1,9 +1,10 @@
 let currentUser = null;
 let currentMode = 'login';
 let socket = null;
+let playerColor = '#00ffcc'; // Default color
 
-// UI Elements
 const authScreen = document.getElementById('auth-screen');
+const customizationScreen = document.getElementById('customization-screen');
 const lobbyScreen = document.getElementById('lobby-screen');
 const gameScreen = document.getElementById('game-screen');
 
@@ -55,7 +56,7 @@ authForm.addEventListener('submit', async (e) => {
         
         if (data.success) {
             currentUser = currentMode === 'login' ? data.username : username;
-            initLobby();
+            initCustomization();
         } else {
             authError.textContent = data.error || 'Authentication failed';
         }
@@ -63,6 +64,36 @@ authForm.addEventListener('submit', async (e) => {
         authError.textContent = 'Server connection error';
     }
 });
+
+// Customization Logic
+const availableColors = ['#00ffcc', '#ff3366', '#aaff00', '#00bfff', '#ffaa00'];
+
+function initCustomization() {
+    showScreen(customizationScreen);
+    const palette = document.getElementById('color-palette');
+    
+    // Only populate if empty
+    if (palette.children.length === 0) {
+        availableColors.forEach(color => {
+            const btn = document.createElement('div');
+            btn.className = 'color-btn';
+            btn.style.backgroundColor = color;
+            btn.style.color = color; // For the glow effect
+            if (color === playerColor) btn.classList.add('selected');
+            
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                playerColor = color;
+            });
+            palette.appendChild(btn);
+        });
+        
+        document.getElementById('btn-to-lobby').addEventListener('click', () => {
+            initLobby();
+        });
+    }
+}
 
 // Lobby Logic
 function initLobby() {
@@ -113,9 +144,9 @@ async function fetchLobbies() {
 }
 
 btnCreateGame.addEventListener('click', () => {
-    socket.emit('createGame', currentUser);
+    socket.emit('createGame', { username: currentUser, color: playerColor });
 });
 
 window.joinGame = (gameId) => {
-    socket.emit('joinGame', { gameId, username: currentUser });
+    socket.emit('joinGame', { gameId, username: currentUser, color: playerColor });
 };

@@ -41,17 +41,17 @@ app.get('/api/lobbies', (req, res) => {
 io.on('connection', (socket) => {
     console.log('A user connected:', socket.id);
 
-    socket.on('createGame', (username) => {
+    socket.on('createGame', ({username, color}) => {
         const gameId = Math.random().toString(36).substring(7);
         games[gameId] = new Game(gameId);
-        games[gameId].addPlayer(socket.id, username);
+        games[gameId].addPlayer(socket.id, username, color);
         socket.join(gameId);
         socket.emit('gameJoined', { gameId, map: games[gameId].map });
     });
 
-    socket.on('joinGame', ({ gameId, username }) => {
+    socket.on('joinGame', ({ gameId, username, color }) => {
         if (games[gameId] && Object.keys(games[gameId].players).length < 2) {
-            games[gameId].addPlayer(socket.id, username);
+            games[gameId].addPlayer(socket.id, username, color);
             socket.join(gameId);
             socket.emit('gameJoined', { gameId, map: games[gameId].map });
             io.to(gameId).emit('playerJoined');

@@ -214,3 +214,31 @@ canvas {
     border-radius: 0 0 8px 8px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.5);
 }
+
+/* Garage / Customization */
+.color-palette {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 25px;
+}
+
+.color-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+.color-btn:hover {
+    transform: scale(1.1);
+}
+
+.color-btn.selected {
+    border: 2px solid #fff;
+    transform: scale(1.2);
+    box-shadow: 0 0 15px currentColor;
+}
